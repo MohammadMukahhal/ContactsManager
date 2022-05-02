@@ -1,0 +1,66 @@
+﻿@page "/contact/{id}"
+@inject ContactsManager.Data.IContactService ContactService;
+@inject NavigationManager NavManager
+<h1>Edit Contact</h1>
+
+<EditForm Model = "contact" OnSubmit = "@Submit">
+    <div class="form-group">
+        <label>ID</label>
+        <input id="id" class="form-control" name="id" value="@contact.Id" readonly />
+    </div>
+    <div class="form-group">
+        <label>First Name</label>
+        <InputText id="firstName" class="form-control" name="firstName" @bind-Value="contact.FirstName"></InputText>
+    </div>
+        <div class="form-group">
+        <label>Last Name</label>
+        <InputText id="lastName" class="form-control" name="lastName" @bind-Value="contact.LastName"></InputText>
+    </div>
+        <div class="form-group">
+        <label>Phone Number</label>
+        <InputText id="phone" class="form-control" name="phone" @bind-Value="contact.Phone"></InputText>
+    </div>
+        <div class="form-group">
+        <label>Birth Date</label>
+        <InputDate id="dob" class="form-control" name="dob" @bind-Value="contact.BirthDate"></InputDate>
+    </div>
+    <br />
+    <a @onclick = "(e=>Cancel())" role="button" class="btn btn-warning">Cancel</a>
+    <button type="submit" class="alert-success btn-block"> Submit! </button>
+</EditForm>
+
+@code {
+    [Parameter]
+    public String Id { get; set; } = default!;
+    private ContactsManager.Data.Contact contact { get; set; } = default!;
+
+    protected override void OnInitialized()
+    {
+        if (!string.IsNullOrEmpty(Id) && (Id == "0"))
+        {
+            contact = new Data.Contact();
+        }
+        else
+        {
+            contact = ContactService.GetContact(Guid.Parse(Id));
+        }
+    }
+
+    private void Submit()
+    {
+        if (contact.Id == Guid.Empty)
+        {
+            ContactService.AddContact(contact);
+        }
+        else
+        {
+            ContactService.UpdateContact(contact);
+        }
+        NavManager.NavigateTo("contacts");
+    }
+
+    private void Cancel()
+    {
+        NavManager.NavigateTo("contacts");
+    }
+}
