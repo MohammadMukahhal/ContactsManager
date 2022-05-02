@@ -1,5 +1,8 @@
 ﻿@page "/contact/{id}"
 @inject ContactsManager.Data.IContactService ContactService;
+@using ContactsManager.Data
+@using Microsoft.EntityFrameworkCore
+@using System.Data
 @inject NavigationManager NavManager
 @inject IJSRuntime JSRuntime
 <h1>Edit Contact</h1>
@@ -33,17 +36,18 @@
 @code {
     [Parameter]
     public String Id { get; set; } = default!;
-    private ContactsManager.Data.Contact contact { get; set; } = default!;
+    [Inject] ContactDbContext contactContext { set; get; } = default!;
+    private ContactsManager.Data.Contact contact = new ContactsManager.Data.Contact();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         if (!string.IsNullOrEmpty(Id) && (Id == "0"))
         {
-            contact = new Data.Contact();
+            contact = new ContactsManager.Data.Contact();
         }
         else
         {
-            contact = ContactService.GetContact(Guid.Parse(Id));
+            contact = await contactContext.Contacts.FindAsync(Guid.Parse(Id));
         }
     }
 
@@ -54,16 +58,20 @@
             if (contact.FirstName == null && contact.LastName == null)
             {
                 if (!await JSRuntime.InvokeAsync<bool>("confirm", $"Must enter first or last name to save new contact!"))
-                return;
+                    return;
             }
             else
             {
-                ContactService.AddContact(contact);
+                //ContactService.AddContact(contact);
+                contactContext.Contacts.AddAsync(contact);
+                contactContext.SaveChangesAsync();
             }
         }
         else
         {
-            ContactService.UpdateContact(contact);
+            //ContactService.UpdateContact(contact);
+            contactContext.Contacts.Update(contact);
+            contactContext.SaveChangesAsync();
         }
         NavManager.NavigateTo("contacts");
     }

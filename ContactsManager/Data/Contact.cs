@@ -10,6 +10,8 @@ namespace ContactsManager.Data
         /// <summary>
         /// Unique identifier.
         /// </summary>
+
+        [Key]
         public Guid Id { get; set; }
 
         /// <summary>

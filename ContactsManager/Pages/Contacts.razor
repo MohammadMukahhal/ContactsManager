@@ -1,5 +1,8 @@
 ﻿@page "/"
 @page "/contacts"
+@using ContactsManager.Data
+@using Microsoft.EntityFrameworkCore
+@using System.Data
 @inject ContactsManager.Data.IContactService ContactService;
 @inject IJSRuntime JSRuntime
 
@@ -25,26 +28,43 @@
             <td>@contact.Phone</td>
             <td>@contact.BirthDate</td>
             <td><a class="btn btn-warning" href="contact/@contact.Id" role="button">Edit</a></td>
-            <td><a @onclick = "(e=>delete(contact.Id))" role="button" class="btn btn-danger">Delete</a></td>
+            <td><a @onclick = "(e=>delete(contact))" role="button" class="btn btn-danger">Delete</a></td>
         </tr>
       }
    </tbody>
 </table>
 
 @code {
-    private List<ContactsManager.Data.Contact> contacts = default!;
-    protected override void OnInitialized()
+    [Inject] ContactDbContext contactContext { set; get; } = default!;
+    private List<ContactsManager.Data.Contact> contacts = new List<ContactsManager.Data.Contact>();
+
+    protected override async Task OnInitializedAsync()
     {
-        contacts = ContactService.GetContacts();
+        contacts = await contactContext.Contacts.ToListAsync();
     }
 
-    async Task delete(Guid Id)
+    private async Task delete(ContactsManager.Data.Contact oldContact)
     {
-        var oldContact = ContactService.GetContact(Id);
         if (!await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete this contact? '{oldContact.FirstName + " " + oldContact.LastName}'?"))
             return;
-
-        ContactService.DeleteContact(Id);
+        contactContext.Contacts.Remove(oldContact);
+        contactContext.SaveChangesAsync();
+        contacts.Remove(oldContact);
+        StateHasChanged();
     }
+    /*
+    protected override void OnInitialized()
+    {
+    contacts = ContactService.GetContacts();
+    }
+    async Task delete(Guid Id)
+    {
+    var oldContact = ContactService.GetContact(Id);
+    if (!await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete this contact? '{oldContact.FirstName + " " + oldContact.LastName}'?"))
+    return;
+
+    ContactService.DeleteContact(Id);
+    }
+    */
 
 }
