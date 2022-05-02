@@ -1,6 +1,7 @@
 ﻿@page "/contact/{id}"
 @inject ContactsManager.Data.IContactService ContactService;
 @inject NavigationManager NavManager
+@inject IJSRuntime JSRuntime
 <h1>Edit Contact</h1>
 
 <EditForm Model = "contact" OnSubmit = "@Submit">
@@ -46,11 +47,19 @@
         }
     }
 
-    private void Submit()
+    async void Submit()
     {
         if (contact.Id == Guid.Empty)
         {
-            ContactService.AddContact(contact);
+            if (contact.FirstName == null && contact.LastName == null)
+            {
+                if (!await JSRuntime.InvokeAsync<bool>("confirm", $"Must enter first or last name to save new contact!"))
+                return;
+            }
+            else
+            {
+                ContactService.AddContact(contact);
+            }
         }
         else
         {
